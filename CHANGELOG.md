@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.16.0-beta.1 — 2026-10-11
+
+This is a pre-release: npm packages are published under the `next` tag, and installed apps on the stable release do not update to it. Linux package managers see `0.16.0-beta.1` as newer than `0.16.0`, so `.deb` and `.rpm` users should remove the beta before installing the final 0.16.0.
+
 ### Breaking changes
 
 - The desktop app requires macOS 13 or later; the web app supports Chrome 111, Edge 111, Firefox 128, and Safari 16.4 or later.
