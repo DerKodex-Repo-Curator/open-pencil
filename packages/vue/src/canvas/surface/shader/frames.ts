@@ -1,8 +1,8 @@
 import type { Editor } from '@open-pencil/core/editor'
 
 /**
- * Draws one fresh frame of a shader. The source is a WebGPU canvas that keeps the frame only
- * until the current task ends, so it is drawn from at once, never kept.
+ * Draws one fresh frame of a shader. The source is redrawn with the shader's next frame, so it
+ * is drawn from at once, never kept.
  */
 export type ShaderFrameListener = (source: CanvasImageSource) => void
 
@@ -14,6 +14,8 @@ export type ShaderFrameListener = (source: CanvasImageSource) => void
 export interface ShaderFrames {
   listen(image: string, listener: ShaderFrameListener): () => void
   publish(image: string, source: CanvasImageSource): void
+  /** Whether anything shows `image` besides the canvas. */
+  listened(image: string): boolean
 }
 
 const hubs = new WeakMap<Editor, ShaderFrames>()
@@ -35,6 +37,9 @@ export function shaderFrames(editor: Editor): ShaderFrames {
     },
     publish(image, source) {
       for (const listener of listeners.get(image) ?? []) listener(source)
+    },
+    listened(image) {
+      return listeners.has(image)
     }
   }
   hubs.set(editor, hub)

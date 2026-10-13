@@ -88,7 +88,7 @@ import type { PresenceCursor, RenderOverlays, RulerTheme, SelectionTheme } from 
 /**
  * A picture uploaded as a texture that knows its size: an `ImageBitmap`, or a canvas, which
  * WebGL uploads as it does an image though CanvasKit's types leave it out. A canvas is uploaded
- * as it is when this is called, so a WebGPU canvas is passed in the task that drew it.
+ * as it is when this is called.
  */
 export type LiveImageSource =
   | Extract<TextureSource, { width: number; height: number }>

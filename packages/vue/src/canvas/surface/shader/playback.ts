@@ -36,6 +36,12 @@ interface Player {
   disposed: boolean
   /** The copy of its last frame shown, where frames are copied, closed when the next replaces it. */
   copied: ImageBitmap | null
+  /**
+   * Where each frame is copied once when preview's islands show it too. Read through both 2D
+   * and WebGL, a WebGPU canvas gives WebKit's second reader an earlier frame, though every read
+   * should copy the latest, so the canvas and the islands both read this copy instead.
+   */
+  shared: HTMLCanvasElement | null
   /** When it last drew, so its clock advances by the time since then however often it draws. */
   drawnAt: number
   /** How far its animation has run, in seconds, so a player that replaces it goes on from there. */
@@ -179,6 +185,7 @@ export function useShaderPlayback(options: {
       visible: true,
       disposed: false,
       copied: null,
+      shared: null,
       drawnAt: 0,
       elapsed: 0
     }
@@ -302,10 +309,9 @@ export function useShaderPlayback(options: {
   )
 
   /**
-   * Draws every visible shader and shows its frame. The WebGPU canvas itself is uploaded right
-   * after drawing, in the same task, since it keeps its frame only until that task ends. A
-   * browser that cannot upload a WebGPU canvas gets a copy of each frame instead, which costs a
-   * readback, so frames then come at most every `COPY_FRAME_MS`.
+   * Draws every visible shader and shows its frame, uploading the canvas it was drawn on as it
+   * is. A browser that cannot upload a WebGPU canvas gets a copy of each frame instead, which
+   * costs a readback, so frames then come at most every `COPY_FRAME_MS`.
    */
   async function step(now: number) {
     const renderer = getRenderer()
@@ -322,12 +328,13 @@ export function useShaderPlayback(options: {
       player.drawnAt = now
       await player.renderer?.renderFrame({ deltaSeconds: delta, waitForGpu: false })
       if (player.disposed) continue
-      // Preview's islands draw their shader layers from this frame, in this same task.
-      frames.publish(hash, player.canvas)
-      if (!copyFrames && uploads(renderer, hash, player)) drew = true
+      const source = frames.listened(hash) ? share(player) : player.canvas
+      // Preview's islands draw their shader layers from this frame.
+      frames.publish(hash, source)
+      if (!copyFrames && uploads(renderer, hash, player, source)) drew = true
       else {
         copyFrames = true
-        copies.push(createImageBitmap(player.canvas).then((frame) => ({ hash, player, frame })))
+        copies.push(createImageBitmap(source).then((frame) => ({ hash, player, frame })))
       }
       // The next frame starts with the shaders this one had no time for.
       if (performance.now() - started > FRAME_BUDGET_MS) {
@@ -348,10 +355,31 @@ export function useShaderPlayback(options: {
     if (drew) markDirty()
   }
 
-  /** Whether the canvas shows `player`'s WebGPU canvas uploaded as it is. */
-  function uploads(renderer: SkiaRenderer, hash: string, player: Player): boolean {
+  /** Draws `player`'s frame into its shared copy, which is read in its place. */
+  function share(player: Player): HTMLCanvasElement {
+    const { canvas } = player
+    const shared = player.shared ?? document.createElement('canvas')
+    player.shared = shared
+    if (shared.width !== canvas.width || shared.height !== canvas.height) {
+      shared.width = canvas.width
+      shared.height = canvas.height
+    }
+    const context = shared.getContext('2d')
+    if (!context) return canvas
+    context.clearRect(0, 0, shared.width, shared.height)
+    context.drawImage(canvas, 0, 0)
+    return shared
+  }
+
+  /** Whether the canvas shows `source`, `player`'s frame, uploaded as it is. */
+  function uploads(
+    renderer: SkiaRenderer,
+    hash: string,
+    player: Player,
+    source: HTMLCanvasElement
+  ): boolean {
     try {
-      return renderer.setLiveImage(hash, player.canvas, player.nodeIds)
+      return renderer.setLiveImage(hash, source, player.nodeIds)
     } catch {
       return false
     }
