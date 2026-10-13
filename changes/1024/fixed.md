@@ -1,0 +1,2 @@
+- Overrides of layers inside instances reach the other people in a shared room; they were dropped on the way.
+- Swapping a nested instance, by hand or through an instance swap property, keeps what was overridden on the layers the new component has under the same names, as in Figma, instead of losing every override inside it.
