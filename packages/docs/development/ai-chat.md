@@ -8,6 +8,10 @@ How the built-in AI chat turns a message into edits, how a reply ends, and how w
 
 `history/continuation.ts` leaves tool calls without a result out of the request. They stay in the saved transcript.
 
+## Skills
+
+Skills are SKILL.md folders in the [Agent Skills](https://agentskills.io/specification) format (`src/app/ai/skills/`). The direct chat lists the enabled skills the model may load, by name and description, after its instructions (`skillCatalog`), and offers two tools while any skill is enabled: `load_skill` returns a skill's instructions and the files in its folder, and `read_skill_file` reads one of those files, never a path the skill does not list. Scripts in a skill do not run in this chat. ACP agents load their own skills.
+
 ## A run
 
 `transports.ts` starts a run (`tools/run.ts`) when the message is sent, before the model is reached, so a Stop at any point ends a run that exists. A `Run` belongs to one reply and holds:

@@ -23,7 +23,17 @@ import { chatThinkingLevel } from '@/app/ai/chat/thinking'
 import { createAIModelRuntime, resolveModelConnectionAPIKey } from '@/app/ai/models'
 import type { ThinkingLevel } from '@/app/ai/models/types'
 import { createRunPreview } from '@/app/ai/preview/run'
-import { createAITools, currentRun, endRun, recordStep, startRun } from '@/app/ai/tools'
+import { skillCatalog } from '@/app/ai/skills/catalog'
+import { enabledSkills } from '@/app/ai/skills/library'
+import { createSkillTools, SKILL_TOOL_NAMES } from '@/app/ai/skills/tools'
+import {
+  createAITools,
+  currentRun,
+  endRun,
+  recordStep,
+  startRun,
+  type AITools
+} from '@/app/ai/tools'
 import { enabledAIToolDefinitions } from '@/app/ai/tools/catalog'
 import { aiToolOverrides } from '@/app/ai/tools/preferences'
 import { restAgents } from '@/app/automation/agents'
@@ -115,7 +125,10 @@ export function createToolLoopTransport({
   onError,
   diagnosticContext = {}
 }: ToolLoopTransportOptions) {
-  const tools = createAITools(store, diagnosticContext)
+  const tools: AITools = {
+    ...createAITools(store, diagnosticContext),
+    ...createSkillTools(() => enabledSkills.value)
+  }
   // The reply in progress; a transport sends one message at a time.
   let run = currentRun(store)
   // While JSX streams, the chat's agent moves through the elements as they appear, here and
@@ -139,9 +152,13 @@ export function createToolLoopTransport({
       const enabledNames = new Set(
         enabledAIToolDefinitions(aiToolOverrides.value).map((tool) => tool.name)
       )
+      const skills = enabledSkills.value
+      if (skills.length > 0) for (const name of SKILL_TOOL_NAMES) enabledNames.add(name)
+      const catalog = skillCatalog(skills)
       preview.clear()
       return {
         ...options,
+        instructions: catalog ? `${SYSTEM_PROMPT}\n\n${catalog}` : SYSTEM_PROMPT,
         stopWhen: stepCountIs(currentRun(store).maxSteps),
         // Keep the full catalog for validating history; offer only enabled tools to this request.
         tools: Object.fromEntries(Object.entries(tools).filter(([name]) => enabledNames.has(name))),

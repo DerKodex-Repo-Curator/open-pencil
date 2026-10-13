@@ -6,8 +6,10 @@ import { MockLanguageModelV4 } from 'ai/test'
 
 import { createToolLoopTransport } from '@/app/ai/chat/transports'
 import type { ThinkingLevel } from '@/app/ai/models/types'
+import { enabledSkills } from '@/app/ai/skills/library'
 import { createEditorStore } from '@/app/editor/session/create'
 
+import { skillFixture } from '#tests/helpers/chat/skills'
 import { MOCK_USAGE } from '#tests/helpers/chat/usage'
 
 function replyModel() {
@@ -92,6 +94,38 @@ test('OpenRouter receives the level as its own reasoning option', async () => {
       openrouter: { reasoning: { effort: 'minimal' } }
     })
   } finally {
+    store.dispose()
+  }
+})
+
+test('enabled skills reach the model as a listing and the tools that load them', async () => {
+  const store = createEditorStore()
+  const model = replyModel()
+  try {
+    const transport = createToolLoopTransport({
+      store,
+      providerID: 'anthropic',
+      model,
+      effectiveModelID: 'claude-test',
+      maxOutputTokens: 100,
+      thinkingLevel: () => 'default'
+    })
+    enabledSkills.value = [skillFixture()]
+    await send(transport)
+    enabledSkills.value = []
+    await send(transport)
+    const [withSkills, without] = model.doStreamCalls.map((call) => ({
+      system: call.prompt.flatMap((message) =>
+        message.role === 'system' ? [message.content] : []
+      ),
+      tools: (call.tools ?? []).map((tool) => tool.name)
+    }))
+    expect(withSkills?.system.join('\n')).toContain('<name>grid</name>')
+    expect(withSkills?.tools).toEqual(expect.arrayContaining(['load_skill', 'read_skill_file']))
+    expect(without?.system.join('\n')).not.toContain('<name>grid</name>')
+    expect(without?.tools).not.toContain('load_skill')
+  } finally {
+    enabledSkills.value = []
     store.dispose()
   }
 })
