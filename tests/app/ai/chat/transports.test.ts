@@ -6,7 +6,7 @@ import { MockLanguageModelV4 } from 'ai/test'
 
 import { createToolLoopTransport } from '@/app/ai/chat/transports'
 import type { ThinkingLevel } from '@/app/ai/models/types'
-import { enabledSkills } from '@/app/ai/skills/library'
+import type { Skill } from '@/app/ai/skills/types'
 import { createEditorStore } from '@/app/editor/session/create'
 
 import { skillFixture } from '#tests/helpers/chat/skills'
@@ -101,6 +101,9 @@ test('OpenRouter receives the level as its own reasoning option', async () => {
 test('enabled skills reach the model as a listing and the tools that load them', async () => {
   const store = createEditorStore()
   const model = replyModel()
+  // Each message reads the skills again; the second finds none left.
+  const reads: Skill[][] = [[skillFixture()], []]
+  let enabled: Skill[] = []
   try {
     const transport = createToolLoopTransport({
       store,
@@ -108,11 +111,15 @@ test('enabled skills reach the model as a listing and the tools that load them',
       model,
       effectiveModelID: 'claude-test',
       maxOutputTokens: 100,
-      thinkingLevel: () => 'default'
+      thinkingLevel: () => 'default',
+      skills: {
+        refresh: async () => {
+          enabled = reads.shift() ?? []
+        },
+        enabled: () => enabled
+      }
     })
-    enabledSkills.value = [skillFixture()]
     await send(transport)
-    enabledSkills.value = []
     await send(transport)
     const [withSkills, without] = model.doStreamCalls.map((call) => ({
       system: call.prompt.flatMap((message) =>
@@ -125,7 +132,6 @@ test('enabled skills reach the model as a listing and the tools that load them',
     expect(without?.system.join('\n')).not.toContain('<name>grid</name>')
     expect(without?.tools).not.toContain('load_skill')
   } finally {
-    enabledSkills.value = []
     store.dispose()
   }
 })

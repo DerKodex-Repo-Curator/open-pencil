@@ -10,7 +10,11 @@ export interface SkillDefinition {
   userInvocable: boolean
 }
 
+/** Where skills come from: the shared Agent Skills folder and Claude Code's. */
+export type SkillSourceID = 'agents' | 'claude'
+
 export interface Skill extends SkillDefinition {
+  source: SkillSourceID
   /** Where the skill was found, as the user sees it. */
   location: string
   /** Files in the skill's folder other than SKILL.md, relative to the folder. */
@@ -18,4 +22,17 @@ export interface Skill extends SkillDefinition {
   readFile: (path: string) => Promise<string>
   /** Departures from the Agent Skills specification that did not stop the skill loading. */
   warnings: readonly string[]
+}
+
+/** A folder with a SKILL.md that could not be read as a skill. */
+export interface SkillProblem {
+  source: SkillSourceID
+  folder: string
+  location: string
+  error: string
+}
+
+export interface SkillScan {
+  skills: Skill[]
+  problems: SkillProblem[]
 }

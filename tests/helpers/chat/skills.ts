@@ -7,6 +7,7 @@ export function skillFixture(overrides: Partial<Skill> = {}): Skill {
     instructions: 'Snap every frame to multiples of 8.',
     modelInvocable: true,
     userInvocable: true,
+    source: 'agents',
     location: '~/.agents/skills/grid',
     files: [],
     readFile: () => Promise.reject(new Error('No files')),

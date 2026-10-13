@@ -24,7 +24,7 @@ import { createAIModelRuntime, resolveModelConnectionAPIKey } from '@/app/ai/mod
 import type { ThinkingLevel } from '@/app/ai/models/types'
 import { createRunPreview } from '@/app/ai/preview/run'
 import { skillCatalog } from '@/app/ai/skills/catalog'
-import { enabledSkills } from '@/app/ai/skills/library'
+import { appSkillLibrary, type SkillLibrary } from '@/app/ai/skills/library'
 import { createSkillTools, SKILL_TOOL_NAMES } from '@/app/ai/skills/tools'
 import {
   createAITools,
@@ -74,6 +74,7 @@ export type ToolLoopTransportOptions = {
   thinkingLevel: () => ThinkingLevel
   onError?: (error: unknown) => void
   diagnosticContext?: AIDiagnosticContext
+  skills?: SkillLibrary
 }
 
 const ANTHROPIC_CACHE_CONTROL = {
@@ -123,11 +124,12 @@ export function createToolLoopTransport({
   maxOutputTokens,
   thinkingLevel,
   onError,
-  diagnosticContext = {}
+  diagnosticContext = {},
+  skills = appSkillLibrary
 }: ToolLoopTransportOptions) {
   const tools: AITools = {
     ...createAITools(store, diagnosticContext),
-    ...createSkillTools(() => enabledSkills.value)
+    ...createSkillTools(skills.enabled)
   }
   // The reply in progress; a transport sends one message at a time.
   let run = currentRun(store)
@@ -152,9 +154,9 @@ export function createToolLoopTransport({
       const enabledNames = new Set(
         enabledAIToolDefinitions(aiToolOverrides.value).map((tool) => tool.name)
       )
-      const skills = enabledSkills.value
-      if (skills.length > 0) for (const name of SKILL_TOOL_NAMES) enabledNames.add(name)
-      const catalog = skillCatalog(skills)
+      const enabledSkills = skills.enabled()
+      if (enabledSkills.length > 0) for (const name of SKILL_TOOL_NAMES) enabledNames.add(name)
+      const catalog = skillCatalog(enabledSkills)
       preview.clear()
       return {
         ...options,
@@ -210,6 +212,8 @@ export function createToolLoopTransport({
       // DirectChatTransport handles error chunks, but not a rejected underlying stream.
       return createUIMessageStream<UIMessage>({
         execute: async ({ writer }) => {
+          // Skills installed or edited since the last message reach this one.
+          await skills.refresh()
           writer.merge(await transport.sendMessages(options))
         },
         onError: handleError

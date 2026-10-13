@@ -6,6 +6,7 @@ mod fonts;
 mod http;
 mod menu;
 mod menu_events;
+mod skills;
 #[cfg(target_os = "macos")]
 mod window;
 
@@ -19,6 +20,7 @@ use fonts::{list_system_fonts, load_system_font};
 use http::proxy_http_request;
 use menu::{install_app_menu, native_menu_checked, set_native_menu_checked};
 use menu_events::handle_menu_event;
+use skills::{skill_folder_file, skill_folders};
 use std::{
     path::{Path, PathBuf},
     sync::Mutex,
@@ -82,7 +84,12 @@ fn sharing_disabled_by_env() -> bool {
             .unwrap_or(false)
     };
     let do_not_track = std::env::var("DO_NOT_TRACK")
-        .map(|value| !matches!(value.trim().to_ascii_lowercase().as_str(), "" | "0" | "false"))
+        .map(|value| {
+            !matches!(
+                value.trim().to_ascii_lowercase().as_str(),
+                "" | "0" | "false"
+            )
+        })
         .unwrap_or(false);
     is_off("OPENPENCIL_TELEMETRY", &["0", "false", "no"]) || do_not_track
 }
@@ -378,6 +385,8 @@ pub fn run() {
             set_recent_files,
             native_menu_checked,
             set_native_menu_checked,
+            skill_folder_file,
+            skill_folders,
             take_pending_open,
             take_pending_rooms,
             sharing_disabled_by_env,
