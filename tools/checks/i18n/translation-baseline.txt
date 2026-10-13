@@ -360,3 +360,4 @@ it:panels.gridAuto
 it:storage.cloudTitle
 pl:panels.gridAuto
 pl:storage.cloudTitle
+de:settings.skills

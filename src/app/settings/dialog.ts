@@ -4,6 +4,7 @@ export type SettingsSection =
   | 'general'
   | 'toolbar'
   | 'ai'
+  | 'skills'
   | 'usage'
   | 'diagnostics'
   | 'privacy'

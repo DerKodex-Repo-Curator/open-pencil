@@ -10,8 +10,8 @@ export interface SkillDefinition {
   userInvocable: boolean
 }
 
-/** Where skills come from: the shared Agent Skills folder and Claude Code's. */
-export type SkillSourceID = 'agents' | 'claude'
+/** Where skills come from: uploaded to OpenPencil, the shared Agent Skills folder, Claude Code's. */
+export type SkillSourceID = 'openpencil' | 'agents' | 'claude'
 
 export interface Skill extends SkillDefinition {
   source: SkillSourceID

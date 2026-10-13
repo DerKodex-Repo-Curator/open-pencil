@@ -44,8 +44,17 @@ describe('parseSkill', () => {
   test('fails a skill that cannot be offered', () => {
     expect(parseSkill('# No frontmatter', 'grid').ok).toBe(false)
     expect(parseSkill('---\nname: grid\n---\nBody', 'grid').ok).toBe(false)
-    expect(parseSkill('---\nname: grid\ndescription: [unclosed\n---\n', 'grid').ok).toBe(false)
     expect(parseSkill('---\nname: grid\ndescription: 42\n---\n', 'grid').ok).toBe(false)
+  })
+
+  test('reads frontmatter that is not valid YAML line by line, with a warning', () => {
+    const result = parseSkill(
+      '---\nname: grid\ndescription: Grids: columns, gutters,\n  and margins.\ndisable-model-invocation: true\n---\nBody',
+      'grid'
+    )
+    expect(result.ok && result.skill.description).toBe('Grids: columns, gutters, and margins.')
+    expect(result.ok && result.skill.modelInvocable).toBe(false)
+    expect(result.ok && result.warnings.length).toBeGreaterThan(0)
   })
 
   test('loads a skill that departs from the specification, with warnings', () => {

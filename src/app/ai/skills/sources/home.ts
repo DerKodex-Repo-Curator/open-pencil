@@ -1,7 +1,8 @@
+import { partition } from 'es-toolkit'
 import * as v from 'valibot'
 
-import { parseSkill } from '../parse'
-import type { Skill, SkillScan, SkillSourceID } from '../types'
+import { isSkill, skillFromFolder } from '../folder'
+import type { SkillScan, SkillSourceID } from '../types'
 
 /** The folders other agents install skills into, in the order a repeated name resolves. */
 export const HOME_SKILL_SOURCES: readonly { id: SkillSourceID; folder: readonly string[] }[] = [
@@ -33,25 +34,20 @@ export function skillsFromFolders(
   folders: readonly SkillFolder[],
   readFile: HomeSkillReader['readFile']
 ): SkillScan {
-  const scan: SkillScan = { skills: [], problems: [] }
-  for (const folder of folders) {
-    const location = `${displayRoot}/${folder.name}`
-    const parsed = parseSkill(folder.skillFile, folder.name)
-    if (!parsed.ok) {
-      scan.problems.push({ source, folder: folder.name, location, error: parsed.error })
-      continue
-    }
-    const skill: Skill = {
-      ...parsed.skill,
-      source,
-      location,
-      files: folder.files,
-      readFile: (path) => readFile(folder.path, path),
-      warnings: parsed.warnings
-    }
-    scan.skills.push(skill)
-  }
-  return scan
+  const [skills, problems] = partition(
+    folders.map((folder) =>
+      skillFromFolder({
+        source,
+        folder: folder.name,
+        location: `${displayRoot}/${folder.name}`,
+        skillFile: folder.skillFile,
+        files: folder.files,
+        readFile: (path) => readFile(folder.path, path)
+      })
+    ),
+    isSkill
+  )
+  return { skills, problems }
 }
 
 /** Reads every home source; a source that cannot be read contributes nothing. */

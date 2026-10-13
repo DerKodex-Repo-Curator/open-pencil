@@ -328,7 +328,35 @@ export const aiMessageDefaults = {
   aiSetupOpenRouterChange: 'Use a different account',
   aiSetupUseRecommended: 'Use recommended setup',
   aiSetupRolesDescription:
-    'Choose a model for each kind of work. We picked recommended ones from what you connected; anything else you configured stays as it is.'
+    'Choose a model for each kind of work. We picked recommended ones from what you connected; anything else you configured stays as it is.',
+  skillsDescription:
+    'Instructions the AI chat loads when a request matches their description. ACP agents load their own skills.',
+  skillsUpload: 'Upload skill',
+  skillsUploadedSource: 'Uploaded',
+  skillsUploadedSourceDescription:
+    'Skills you uploaded to OpenPencil, as a ZIP of the skill’s folder or a SKILL.md.',
+  skillsAgentsSource: 'Shared agent skills',
+  skillsAgentsSourceDescription: params(
+    'Read from {folder}, where pi, Codex, Gemini CLI, Cursor, and other agents install skills.'
+  ),
+  skillsClaudeSource: 'Claude Code skills',
+  skillsClaudeSourceDescription: params('Read from {folder}.'),
+  skillsNoUploads: 'No uploaded skills yet.',
+  skillsNoneInFolder: 'No skills in this folder.',
+  skillsShadowed: 'A skill with the same name above is used instead.',
+  skillsProblems: 'Some folders could not be read as skills',
+  skillsUploadFailed: 'Could not upload the skill',
+  skillsUploadTooLarge: 'The file is larger than 10 MB.',
+  skillsUploadNoSkill: 'The archive has no SKILL.md.',
+  skillsUploadSeveral: 'The archive holds more than one skill. Upload them one at a time.',
+  skillsUploadUnreadable: 'Choose a ZIP archive or a SKILL.md text file.',
+  skillsUploadInvalid: 'The SKILL.md is not valid.',
+  skillsDelete: 'Delete skill',
+  skillsDeleteDescription: params('“{name}” will be removed from OpenPencil.'),
+  skillsLocation: 'Location',
+  skillsFiles: 'Files',
+  skillsInstructions: 'Instructions',
+  skillsWarnings: 'This skill departs from the Agent Skills specification'
 } as const
 
 export const aiMessages = i18n('ai', aiMessageDefaults)

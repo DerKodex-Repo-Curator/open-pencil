@@ -20,6 +20,7 @@ import MCPWorkspacePanel from '@/components/settings/mcp/MCPWorkspacePanel.vue'
 import MediaSettingsPanel from '@/components/settings/media/MediaSettingsPanel.vue'
 import ModelsPanel from '@/components/settings/models/ModelsPanel.vue'
 import PrivacySettingsPanel from '@/components/settings/privacy/PrivacySettingsPanel.vue'
+import SkillsSettingsPanel from '@/components/settings/skills/SkillsSettingsPanel.vue'
 import StorageSettingsPanel from '@/components/settings/storage/StorageSettingsPanel.vue'
 import ToolAccessSettingsPanel from '@/components/settings/tool-access/ToolAccessSettingsPanel.vue'
 import ToolbarSettingsPanel from '@/components/settings/toolbar/ToolbarSettingsPanel.vue'
@@ -48,6 +49,7 @@ const sections = computed(
       { value: 'general', label: settings.value.general },
       { value: 'toolbar', label: settings.value.toolbar },
       { value: 'ai', label: settings.value.aiAndAgents },
+      { value: 'skills', label: settings.value.skills },
       { value: 'usage', label: settings.value.usage },
       { value: 'diagnostics', label: settings.value.diagnostics },
       { value: 'privacy', label: settings.value.privacy },
@@ -115,6 +117,10 @@ function onOpenChange(open: boolean): void {
           <template #leading><icon-lucide-sparkles class="size-3.5" /></template>
           {{ settings.aiAndAgents }}
         </AppTabsTrigger>
+        <AppTabsTrigger value="skills" data-test-id="settings-section-skills">
+          <template #leading><icon-lucide-book-open class="size-3.5" /></template>
+          {{ settings.skills }}
+        </AppTabsTrigger>
         <AppTabsTrigger value="usage" data-test-id="settings-section-usage">
           <template #leading><icon-lucide-chart-no-axes-combined class="size-3.5" /></template>
           {{ settings.usage }}
@@ -157,6 +163,9 @@ function onOpenChange(open: boolean): void {
             <ChatSettingsSection />
           </ModelsPanel>
         </section>
+      </AppTabsContent>
+      <AppTabsContent value="skills" as-child>
+        <SkillsSettingsPanel />
       </AppTabsContent>
       <AppTabsContent value="usage" as-child>
         <SettingsPage><UsageSettingsPanel /></SettingsPage>

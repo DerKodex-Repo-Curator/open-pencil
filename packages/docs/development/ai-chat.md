@@ -12,7 +12,7 @@ How the built-in AI chat turns a message into edits, how a reply ends, and how w
 
 Skills are SKILL.md folders in the [Agent Skills](https://agentskills.io/specification) format (`src/app/ai/skills/`). The direct chat lists the enabled skills the model may load, by name and description, after its instructions (`skillCatalog`), and offers two tools while any skill is enabled: `load_skill` returns a skill's instructions and the files in its folder, and `read_skill_file` reads one of those files, never a path the skill does not list. Scripts in a skill do not run in this chat. ACP agents load their own skills.
 
-On the desktop, every message first reads `~/.agents/skills` and then `~/.claude/skills` again (`library.ts`), through the shell's `skill_folders` and `skill_folder_file` commands, which follow symlinked skills but read nothing outside a folder with a SKILL.md. Everything found is on until the user turns a source or a skill off (`preferences.ts`); of two skills with the same name, the first one switched on is offered.
+Every message first reads the skills again (`library.ts`): those uploaded in Settings → Skills, kept in IndexedDB as their SKILL.md and text files (`sources/uploaded.ts`), then, on the desktop, `~/.agents/skills` and `~/.claude/skills`, through the shell's `skill_folders` and `skill_folder_file` commands, which follow symlinked skills but read nothing outside a folder with a SKILL.md. Everything found is on until the user turns a source or a skill off (`preferences.ts`); of two skills with the same name, the first one switched on is offered, so an upload wins over a folder. A frontmatter that is not valid YAML, usually a description with an unquoted `: `, is read line by line with a warning rather than dropped.
 
 ## A run
 
