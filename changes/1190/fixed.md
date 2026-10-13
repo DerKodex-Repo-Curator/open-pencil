@@ -1,0 +1,1 @@
+- Shader fills play in preview in Safari and the macOS app wherever a preview control also shows them, instead of freezing on one frame.
