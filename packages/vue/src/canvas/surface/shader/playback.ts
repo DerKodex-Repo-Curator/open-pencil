@@ -41,7 +41,7 @@ interface Player {
    * and WebGL, a WebGPU canvas gives WebKit's second reader an earlier frame, though every read
    * should copy the latest, so the canvas and the islands both read this copy instead.
    */
-  shared: HTMLCanvasElement | null
+  shared: CanvasRenderingContext2D | null
   /** When it last drew, so its clock advances by the time since then however often it draws. */
   drawnAt: number
   /** How far its animation has run, in seconds, so a player that replaces it goes on from there. */
@@ -358,16 +358,14 @@ export function useShaderPlayback(options: {
   /** Draws `player`'s frame into its shared copy, which is read in its place. */
   function share(player: Player): HTMLCanvasElement {
     const { canvas } = player
-    const shared = player.shared ?? document.createElement('canvas')
-    player.shared = shared
+    player.shared ??= sharedContext()
+    const shared = player.shared.canvas
     if (shared.width !== canvas.width || shared.height !== canvas.height) {
       shared.width = canvas.width
       shared.height = canvas.height
     }
-    const context = shared.getContext('2d')
-    if (!context) return canvas
-    context.clearRect(0, 0, shared.width, shared.height)
-    context.drawImage(canvas, 0, 0)
+    player.shared.clearRect(0, 0, shared.width, shared.height)
+    player.shared.drawImage(canvas, 0, 0)
     return shared
   }
 
@@ -407,4 +405,11 @@ export function useShaderPlayback(options: {
     for (const hash of Array.from(players.keys())) stop(hash)
     release()
   })
+}
+
+/** A new canvas's 2D context, which every canvas has until another kind of context claims it. */
+function sharedContext(): CanvasRenderingContext2D {
+  const context = document.createElement('canvas').getContext('2d')
+  if (!context) throw new Error('Shared shader frame canvas unavailable')
+  return context
 }
