@@ -3,6 +3,7 @@ import type { Ref } from 'vue'
 import type { Editor } from '@open-pencil/core/editor'
 
 import { startPenInput } from '#vue/canvas/pen/input'
+import { startPencilInput } from '#vue/canvas/pencil/input'
 import { startShapeDraw, startTextDraw } from '#vue/shared/input/draw'
 import { startPanDrag } from '#vue/shared/input/pan'
 import { handleSelectDown } from '#vue/shared/input/select'
@@ -66,6 +67,11 @@ export function handleToolMouseDown({
 
   if (tool === 'PEN') {
     startPenInput(event, cx, cy, editor, setDrag, cursorOverride)
+    return
+  }
+
+  if (tool === 'PENCIL') {
+    startPencilInput(cx, cy, editor, setDrag)
     return
   }
 

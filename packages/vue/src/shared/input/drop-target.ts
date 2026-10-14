@@ -1,5 +1,7 @@
 import type { Editor } from '@open-pencil/core/editor'
 import { cycleSafeParent, type NodeType, type SceneNode } from '@open-pencil/scene-graph'
+import { getAxisAlignedWorldBounds } from '@open-pencil/scene-graph/coordinate'
+import type { Rect, Vector } from '@open-pencil/scene-graph/primitives'
 
 /** Parents a layer stays in while dragged until it lands on another frame. */
 const ENCLOSING_TYPES = new Set<NodeType>(['GROUP', 'BOOLEAN_OPERATION'])
@@ -64,6 +66,38 @@ export function findDrawParent(cx: number, cy: number, type: NodeType, editor: E
     target = target.parentId ? (editor.graph.getNode(target.parentId) ?? null) : null
   }
   return acceptingTarget(target, editor)?.id ?? editor.state.currentPageId
+}
+
+function rectContains(outer: Rect, inner: Rect): boolean {
+  return (
+    inner.x >= outer.x &&
+    inner.y >= outer.y &&
+    inner.x + inner.width <= outer.x + outer.width &&
+    inner.y + inner.height <= outer.y + outer.height
+  )
+}
+
+/**
+ * The parent a layer drawn over `bounds` goes into: the one it would go into from `start`, or the
+ * nearest container above that holds all of `bounds`, as Figma places a pencil stroke.
+ */
+export function findEnclosingDrawParent(
+  start: Vector,
+  bounds: Rect,
+  type: NodeType,
+  editor: Editor
+): string {
+  const pageId = editor.state.currentPageId
+  let target = editor.graph.getNode(findDrawParent(start.x, start.y, type, editor))
+  while (target && target.type !== 'CANVAS') {
+    if (rectContains(getAxisAlignedWorldBounds(target, editor.graph), bounds)) return target.id
+    let parent = target.parentId ? editor.graph.getNode(target.parentId) : undefined
+    while (parent && parent.type !== 'CANVAS' && !takesDrawnLayer(parent, type)) {
+      parent = parent.parentId ? editor.graph.getNode(parent.parentId) : undefined
+    }
+    target = acceptingTarget(parent ?? null, editor) ?? undefined
+  }
+  return pageId
 }
 
 /** The frame or page that holds a layer, looking past the groups it sits in. */

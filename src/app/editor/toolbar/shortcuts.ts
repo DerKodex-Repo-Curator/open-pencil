@@ -1,4 +1,5 @@
 import type { Tool } from '@open-pencil/core/editor'
+import { formatShortcut } from '@open-pencil/vue'
 
 /** Each tool's key as the toolbar and Settings print it; empty for tools without one. */
 export const TOOL_SHORTCUT_LABELS: Readonly<Record<Tool, string>> = {
@@ -11,6 +12,7 @@ export const TOOL_SHORTCUT_LABELS: Readonly<Record<Tool, string>> = {
   POLYGON: '',
   STAR: '',
   PEN: 'P',
+  PENCIL: formatShortcut('SHIFT+P') ?? '',
   TEXT: 'T',
   HAND: 'H',
   COMMENT: 'C'
